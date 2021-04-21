@@ -75,3 +75,5 @@ python3 sender.py -p './network/' -a A
 python3 receiver.py -p './network/' -a B
 
 Now, A can send messages to B (given that network.py is running)...
+
+python network.py -p  "./files" -a "AZ" --clean
