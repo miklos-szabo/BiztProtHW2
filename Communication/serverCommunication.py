@@ -1,4 +1,5 @@
 from netsim.netinterface import network_interface
+from Communication.message import Message
 
 
 class ServerCommunication:
@@ -11,12 +12,12 @@ class ServerCommunication:
         if self.netIf is None:
             self.netIf = network_interface("../netsim/files/", "Z")  # Z is the server's address
 
-    def sendMessageToClient(self, message: bytes):
+    def sendMessageToClient(self, message: Message):
         self.checkAndCreateInterface()
-        self.netIf.send_msg("A", message)
+        self.netIf.send_msg("A", message.toBytes())
 
-    def receiveMessageFromClient(self) -> str:
+    def receiveMessageFromClient(self) -> Message:
         self.checkAndCreateInterface()
         status, msg = self.netIf.receive_msg(True)
-        return msg.decode('ascii')
+        return Message.fromBytes(msg)
 
