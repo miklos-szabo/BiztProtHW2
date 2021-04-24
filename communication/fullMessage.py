@@ -15,7 +15,7 @@ class FullMessage:
     file: bytes     # All bytes of the file, also used for listing files
     path: str
     password: bytes      #LGN
-    clientKey: bytes     #HDS
+    ownPublicKey: bytes     #HDS
     randomString: str    #HDS
     replyStatus: str
 
@@ -30,7 +30,7 @@ class FullMessage:
         self.file = file
         self.path = path
         self.password = password
-        self.clientKey = clientKey
+        self.ownPublicKey = clientKey
         self.randomString = randomString
         self.replyStatus = replyStatus
         self.messages = []
@@ -42,7 +42,7 @@ class FullMessage:
 
     def __constructMessagesAsClient(self):    # Add the base message here, without the signature
         if self.command == "HDS":
-            self.__addAsMessage(self.clientKey)
+            self.__addAsMessage(self.ownPublicKey)
             self.__addAsMessage(self.randomString.encode('ascii'))
 
         elif self.command == "LGN":
@@ -163,7 +163,7 @@ class FullMessage:
 
     def __parseAsServer(self, messages: List[Message]):
         if self.command == "HDS":
-            self.clientKey = messages[0].data + messages[1].data
+            self.ownPublicKey = messages[0].data + messages[1].data
             self.randomString = (messages[2].data + messages[3].data).decode('ascii')
 
         elif self.command == "LGN":
