@@ -6,9 +6,11 @@ from typing import List
 
 class ServerCommunication:
     netIf: network_interface = None
+    keyPass: bytes  # Password for accessing the private key
 
-    def __init__(self):
+    def __init__(self, keypass: bytes):
         self.checkAndCreateInterface()
+        self.keyPass = keypass
 
     def checkAndCreateInterface(self):
         if self.netIf is None:
@@ -16,6 +18,7 @@ class ServerCommunication:
 
     def sendMessageToClient(self, fullMessage: FullMessage):
         self.checkAndCreateInterface()
+        fullMessage.createMessages()
 
         for msg in fullMessage.messages:
             self.netIf.send_msg(fullMessage.clientAddress, msg.toBytes())
@@ -31,7 +34,7 @@ class ServerCommunication:
         receivedMessages: List[Message] = [firstMessage]
         for i in range(1, firstMessage.messagesCount):
             status, msg = self.netIf.receive_msg(True)
-            receivedMessages.append(Message.fromBytes(msg)) # TODO timeout?
+            receivedMessages.append(Message.fromBytes(msg))  # TODO timeout?
 
         # Check message order
         messageNumbers = [m.messageNr for m in receivedMessages]
@@ -40,11 +43,5 @@ class ServerCommunication:
             if msgNr != num:
                 raise Exception("Wrong message order!")
 
-        fullMessage = FullMessage(firstMessage.sessionId, firstMessage.command, firstMessage.origin,
-                                  firstMessage.username, clientToServer=True)
-
-        for message in receivedMessages:
-            fullMessage.file += message.data
-
-        return fullMessage
+        return FullMessage.fromMessages(receivedMessages, True)
 

@@ -7,10 +7,12 @@ from typing import List
 class ClientCommunication:
     netIf: network_interface = None
     ownAddress: str
+    keypass: bytes  # Password for accessing the private key
 
-    def __init__(self, address: str):  # Address is 1 character, A-Y (Z is the server)
+    def __init__(self, address: str, keypass: bytes):  # Address is 1 character, A-Y (Z is the server)
         self.ownAddress = address
         self.checkAndCreateInterface()
+        self.keypass = keypass
 
     def checkAndCreateInterface(self):
         if self.netIf is None:
@@ -18,6 +20,7 @@ class ClientCommunication:
 
     def sendMessageToServer(self, fullMessage: FullMessage):
         self.checkAndCreateInterface()
+        fullMessage.createMessages()
 
         for msg in fullMessage.messages:
             self.netIf.send_msg("Z", msg.toBytes())
@@ -33,7 +36,7 @@ class ClientCommunication:
         receivedMessages: List[Message] = [firstMessage]
         for i in range(1, firstMessage.messagesCount):
             status, msg = self.netIf.receive_msg(True)
-            receivedMessages.append(Message.fromBytes(msg)) # TODO timeout?
+            receivedMessages.append(Message.fromBytes(msg))  # TODO timeout?
 
         # Check message order
         messageNumbers = [m.messageNr for m in receivedMessages]
@@ -42,9 +45,4 @@ class ClientCommunication:
             if msgNr != num:
                 raise Exception("Wrong message order!")
 
-        fullMessage = FullMessage(firstMessage.sessionId, firstMessage.command, firstMessage.origin, firstMessage.username, clientToServer=False)
-
-        for message in receivedMessages:
-            fullMessage.file += message.data
-
-        return fullMessage
+        return FullMessage.fromMessages(receivedMessages, False)
