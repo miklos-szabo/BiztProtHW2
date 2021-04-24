@@ -1,19 +1,21 @@
-from Communication.serverCommunication import ServerCommunication
-from Communication.message import Message
+from communication.serverCommunication import ServerCommunication
+from communication.fullMessage import FullMessage
 import uuid
+from Crypto.Hash import SHA256
 
-communication = ServerCommunication()
+communication = ServerCommunication(SHA256.new("keyPassword".encode('ascii')).digest())
 
-#%%
 while True:
     print("Waiting for message...")
     msg = communication.receiveMessageFromClient()
     print("Received message!")
-    if msg.data.decode('ascii') == "Hello there!":
-        response = Message(uuid.uuid4(), "12345678901234567890123456789012", "TST", "A", 1, 1, "General Kenobi!".encode('ascii'))
-        communication.sendMessageToClient(response)
-    else:
-        response = Message(uuid.uuid4(), "12345678901234567890123456789012", "TST", "A", 1, 1, "You're a bold one!".encode('ascii'))
-        communication.sendMessageToClient(response)
+
+    response = FullMessage(uuid.uuid4(), msg.command, msg.clientAddress, msg.username, clientToServer=False,
+                          file="Hello there!aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab".encode('ascii'),
+                          path="/user1/asdf", password="passwordpassword".encode('ascii'),
+                          clientKey="keykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykey".encode('ascii'),
+                          randomString="stringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstringstring",
+                          replyStatus="OK")
+    communication.sendMessageToClient(response)
     print("Response sent")
 
