@@ -1,5 +1,5 @@
 import uuid
-from Communication.message import Message
+from communication.message import Message
 from typing import List
 import math
 
@@ -33,14 +33,16 @@ class FullMessage:
         self.clientKey = clientKey
         self.randomString = randomString
         self.replyStatus = replyStatus
+        self.constructMessagesAsClient() if self.clientToServer else self.contructMessagesAsServer()
 
-    def createMessages(self):
+    def constructMessagesAsClient(self):
         for i in range(0, math.ceil(len(self.file) / 256)):
-            self.messages.append(Message(self.sessionId, self.username, self.command, self.clientAddress, math.ceil(len(self.file) / 256), i,
+            self.messages.append(Message(self.sessionId, self.username, self.command, self.clientAddress, math.ceil(len(self.file) / 256), i + 1,
                                          self.file[i * 256 : (i+1) * 256 if (i+1) * 256 < len(self.file) else len(self.file)]))
+            self.messagesCount += 1
 
-
-
-
-
-
+    def contructMessagesAsServer(self):
+        for i in range(0, math.ceil(len(self.file) / 256)):
+            self.messages.append(Message(self.sessionId, self.username, self.command, self.clientAddress, math.ceil(len(self.file) / 256), i + 1,
+                                         self.file[i * 256 : (i+1) * 256 if (i+1) * 256 < len(self.file) else len(self.file)]))
+            self.messagesCount += 1

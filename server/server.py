@@ -1,5 +1,5 @@
-from Communication.serverCommunication import ServerCommunication
-from Communication.message import Message
+from communication.serverCommunication import ServerCommunication
+from communication.fullMessage import FullMessage
 import uuid
 
 communication = ServerCommunication()
@@ -9,11 +9,11 @@ while True:
     print("Waiting for message...")
     msg = communication.receiveMessageFromClient()
     print("Received message!")
-    if msg.data.decode('ascii') == "Hello there!":
-        response = Message(uuid.uuid4(), "12345678901234567890123456789012", "TST", "A", 1, 1, "General Kenobi!".encode('ascii'))
+    if msg.file.decode('ascii') == "Hello there!":
+        response = FullMessage(msg.sessionId, msg.command, msg.clientAddress, msg.username, clientToServer=False, file="General Kenobi!".encode('ascii'))
         communication.sendMessageToClient(response)
     else:
-        response = Message(uuid.uuid4(), "12345678901234567890123456789012", "TST", "A", 1, 1, "You're a bold one!".encode('ascii'))
+        response = FullMessage(msg.sessionId, msg.command, msg.clientAddress, msg.username, clientToServer=False, file="You're a bold one!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccd".encode('ascii'))
         communication.sendMessageToClient(response)
     print("Response sent")
 

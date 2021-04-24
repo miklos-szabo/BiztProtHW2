@@ -1,13 +1,13 @@
-from Communication.clientCommunication import ClientCommunication
-from Communication.message import Message
+from communication.clientCommunication import ClientCommunication
+from communication.fullMessage import FullMessage
 import uuid
 
 communication = ClientCommunication("A")
 
 #%%
 
-message = Message(uuid.uuid4(), "12345678901234567890123456789012", "TST", "A", 1, 1, "Hello there!".encode('ascii'))
-communication.sendBytesToServer(message)
+message = FullMessage(uuid.uuid4(), "TST", "A", "12345678901234567890123456789012", clientToServer=True, file="Hello there!aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab".encode('ascii'))
+communication.sendMessageToServer(message)
 print("Message sent, waiting for response...")
 response = communication.receiveMessageFromServer()
 print("Received response!")
