@@ -1,7 +1,14 @@
 import uuid
+
+from Crypto.PublicKey.RSA import RsaKey
+
 from communication.message import Message
 from typing import List
 import math
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Signature import PKCS1_PSS
+from Crypto.Hash import SHA256
 
 
 class FullMessage:
@@ -12,16 +19,17 @@ class FullMessage:
     clientToServer: bool
     messagesCount: int
     messages: List[Message]
+    encryptedMessages: List[bytes]
     file: bytes     # All bytes of the file, also used for listing files
     path: str
     password: bytes      #LGN
-    ownPublicKey: bytes     #HDS
+    clientPublicKey: str     #HDS
     randomString: str    #HDS
     replyStatus: str
 
     def __init__(self, sessionId: uuid,  command: str, clientAddress: str, username: str = "12345678901234567890123456789012",
                  clientToServer:bool = True, file: bytes = b'', path: str = "/",
-                 password: bytes = b'', clientKey: bytes = b'', randomString: str = "", replyStatus: str = ""):
+                 password: bytes = b'', clientKey: str = b'', randomString: str = "", replyStatus: str = ""):
         self.sessionId = sessionId
         self.username = username
         self.command = command
@@ -30,10 +38,11 @@ class FullMessage:
         self.file = file
         self.path = path
         self.password = password
-        self.ownPublicKey = clientKey
+        self.clientPublicKey = clientKey
         self.randomString = randomString
         self.replyStatus = replyStatus
         self.messages = []
+        self.encryptedMessages = []
         self.messagesCount = 0
 
     def createMessages(self):
@@ -42,7 +51,7 @@ class FullMessage:
 
     def __constructMessagesAsClient(self):    # Add the base message here, without the signature
         if self.command == "HDS":
-            self.__addAsMessage(self.ownPublicKey)
+            self.__addAsMessage(self.clientPublicKey.encode('ascii'))
             self.__addAsMessage(self.randomString.encode('ascii'))
 
         elif self.command == "LGN":
@@ -141,7 +150,7 @@ class FullMessage:
 
         elif self.command == "LST":
             allPaths: bytes = b''
-            for msg in messages:
+            for msg in messages[:-2]:
                 allPaths += msg.data
             self.path = allPaths.decode('ascii')
 
@@ -151,7 +160,7 @@ class FullMessage:
         elif self.command == "DNL":
             self.path = messages[0].data.decode('ascii')
             wholeFile: bytes = b''
-            for msg in messages[1:]:
+            for msg in messages[1:-2]:
                 wholeFile += msg.data
             self.file = wholeFile
 
@@ -163,8 +172,8 @@ class FullMessage:
 
     def __parseAsServer(self, messages: List[Message]):
         if self.command == "HDS":
-            self.ownPublicKey = messages[0].data + messages[1].data
-            self.randomString = (messages[2].data + messages[3].data).decode('ascii')
+            self.clientPublicKey = (messages[0].data + messages[1].data + messages[2].data + messages[3].data).decode('ascii')
+            self.randomString = (messages[4].data + messages[5].data).decode('ascii')
 
         elif self.command == "LGN":
             self.password = messages[0].data
@@ -181,7 +190,7 @@ class FullMessage:
         elif self.command == "UPL":
             self.path = messages[0].data.decode('ascii')
             wholeFile: bytes = b''
-            for msg in messages[1:]:
+            for msg in messages[1:-2]:
                 wholeFile += msg.data
             self.file = wholeFile
 
@@ -195,7 +204,56 @@ class FullMessage:
             raise Exception("Unknown command type!")
 
 
-    def addSignatureMessages(self, signature: bytes):
-        if self.command != "HDS":
-            self.__addAsMessage(signature)
-            self.__updateMessagesCount()
+    def addSignatureMessages(self, keyPass: str):
+        if self.command == "HDS":
+            return
+
+        self.messagesCount += 2         # signature is 2 messages long
+        self.__updateMessagesCount()    # messages have to show the higher message count or signature validation fails
+        self.messagesCount -= 2         # when adding the signature, the message number would be wrong
+
+        allMessagesAsBytes: bytes = b''
+        for message in self.messages:
+            allMessagesAsBytes += message.toBytes()
+
+        h = SHA256.new(allMessagesAsBytes)
+
+        if self.clientToServer:
+            clientkfile = open('../client/client-keypair.pem', 'r')
+            clientkeypairStr = clientkfile.read()
+            clientkfile.close()
+            key = RSA.import_key(clientkeypairStr, passphrase=keyPass)  # Client private key
+
+        else:
+            serverkfile = open('../server/server-keypair.pem', 'r')
+            serverkeypairStr = serverkfile.read()
+            serverkfile.close()
+            key = RSA.import_key(serverkeypairStr, passphrase=keyPass)  # Server private key
+
+        signer = PKCS1_PSS.new(key)
+        signature = signer.sign(h)
+
+        allMessagesCount = self.messagesCount + 2
+        for i in range(0, 2):
+            self.messages.append(
+                Message(self.sessionId, self.username, self.command, self.clientAddress, allMessagesCount, self.messagesCount + 1,
+                        signature[i * 256: (i + 1) * 256 if (i + 1) * 256 <= len(signature) else len(signature)]))
+            self.messagesCount += 1
+
+        # already updated the other messages with the correct message count (+2)
+
+    def encryptMessages(self):
+        if self.clientToServer:
+            kfile = open('../client/server-publKey.pem', 'r')
+            pubkeystr = kfile.read()
+            kfile.close()
+            otherPublicKey = RSA.import_key(pubkeystr)
+
+        else:
+            otherPublicKey = RSA.import_key(self.clientPublicKey)
+
+        cipher = PKCS1_OAEP.new(otherPublicKey)
+
+        for message in self.messages:
+            self.encryptedMessages.append(cipher.encrypt(message.toBytes()))
+
