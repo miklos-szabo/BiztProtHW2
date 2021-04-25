@@ -2,6 +2,7 @@
 #netinterface.py
 
 import os, time
+from eventlet import sleep
 
 class network_interface:
 	timeout = 0.800 # 800 millisec
@@ -56,5 +57,5 @@ class network_interface:
 				self.last_read += 1
 
 			if not blocking or status: return status, msg
-			else: time.sleep(self.timeout)
+			else: sleep(self.timeout)
 			

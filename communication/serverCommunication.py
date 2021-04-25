@@ -8,6 +8,7 @@ from typing import List
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import PKCS1_PSS
+from eventlet import Timeout, sleep
 
 
 class ServerCommunication:
@@ -47,8 +48,11 @@ class ServerCommunication:
         # Receive the other messages
         receivedMessages: List[Message] = [firstMessage]
         for i in range(1, firstMessage.messagesCount):
-            status, msg = self.netIf.receive_msg(True)  # TODO timeout?
-            receivedMessages.append(self.decryptMessageFromClient(msg))
+            # Since we're waiting for all the messages to arrive, if one doesn't, we're stuck in an infinite loop
+            # 5s timeout should be more than enough
+            with Timeout(5, Exception("Not all messages arrived!")) as timeout:
+                status, mesg = self.netIf.receive_msg(True)
+            receivedMessages.append(self.decryptMessageFromClient(mesg))
 
         # Check message order
         messageNumbers = [m.messageNr for m in receivedMessages]
