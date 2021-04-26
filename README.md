@@ -12,3 +12,7 @@ Biztonsági Protokollok 2. házi feladat
 ## Szükséges könyvtárak:
 + pycryptodome
 + eventlet
+
+```
+pip install -r requirements.txt
+```

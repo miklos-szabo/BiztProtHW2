@@ -129,4 +129,6 @@ dmypy.json
 .pyre/
 
 .idea
+.vscode/
 /netsim/files/
+/server/server_home/
