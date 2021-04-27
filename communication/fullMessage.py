@@ -13,7 +13,7 @@ from Crypto.Hash import SHA256
 
 class FullMessage:
     sessionId: uuid
-    username: str
+    username: bytes
     command: str
     clientAddress: str
     clientToServer: bool
@@ -27,7 +27,7 @@ class FullMessage:
     randomString: str    #HDS
     replyStatus: str
 
-    def __init__(self, sessionId: uuid,  command: str, clientAddress: str, username: str = "12345678901234567890123456789012",
+    def __init__(self, sessionId: uuid,  command: str, clientAddress: str, username: bytes = b'',
                  clientToServer:bool = True, file: bytes = b'', path: str = "/",
                  password: bytes = b'', clientKey: str = b'', randomString: str = "", replyStatus: str = ""):
         self.sessionId = sessionId
@@ -61,7 +61,7 @@ class FullMessage:
             self.__addAsMessage(self.path.encode('ascii'))
 
         elif self.command == "GWD":
-            self.__addAsMessage(b'')
+            self.__addAsMessage(b'empty')
 
         elif self.command == "LST":
             self.__addAsMessage(self.path.encode('ascii'))
@@ -219,13 +219,13 @@ class FullMessage:
         h = SHA256.new(allMessagesAsBytes)
 
         if self.clientToServer:
-            clientkfile = open('../client/client-keypair.pem', 'r')
+            clientkfile = open('client/client-keypair.pem', 'r')
             clientkeypairStr = clientkfile.read()
             clientkfile.close()
             key = RSA.import_key(clientkeypairStr, passphrase=keyPass)  # Client private key
 
         else:
-            serverkfile = open('../server/server-keypair.pem', 'r')
+            serverkfile = open('server/server-keypair.pem', 'r')
             serverkeypairStr = serverkfile.read()
             serverkfile.close()
             key = RSA.import_key(serverkeypairStr, passphrase=keyPass)  # Server private key
@@ -244,7 +244,7 @@ class FullMessage:
 
     def encryptMessages(self):
         if self.clientToServer:
-            kfile = open('../client/server-publKey.pem', 'r')
+            kfile = open('client/server-publKey.pem', 'r')
             pubkeystr = kfile.read()
             kfile.close()
             otherPublicKey = RSA.import_key(pubkeystr)
@@ -257,3 +257,9 @@ class FullMessage:
         for message in self.messages:
             self.encryptedMessages.append(cipher.encrypt(message.toBytes()))
 
+    def __str__(self):
+        return f"command: {self.command}\n " \
+               f"file: {self.file.decode('ascii')}\n" \
+               f"path: {self.path}\n" \
+               f"randomstring: {self.randomString}\n" \
+               f"replyStatus: {self.replyStatus}\n\n"

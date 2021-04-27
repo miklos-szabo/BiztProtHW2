@@ -15,20 +15,22 @@ class ServerCommunication:
     netIf: network_interface = None
     keyPass: str  # Password for accessing the private key
     deCipher: PKCS1OAEP_Cipher
+    clientPublicKey: str
 
     def __init__(self, keypass: str):
         self.checkAndCreateInterface()
         self.keyPass = keypass
 
-        kfile = open('../server/server-keypair.pem', 'r')
+        kfile = open('server/server-keypair.pem', 'r')
         keypairstr = kfile.read()
         kfile.close()
         serverPrivateKey = RSA.import_key(keypairstr, passphrase=self.keyPass)
         self.deCipher = PKCS1_OAEP.new(serverPrivateKey)
+        self.clientPublicKey = ""
 
     def checkAndCreateInterface(self):
         if self.netIf is None:
-            self.netIf = network_interface("../netsim/files/", "Z")  # Z is the server's address
+            self.netIf = network_interface("netsim/files/", "Z")  # Z is the server's address
 
     def sendMessageToClient(self, fullMessage: FullMessage):
         self.checkAndCreateInterface()
@@ -69,6 +71,9 @@ class ServerCommunication:
     def decryptMessageFromClient(self, message: bytes) -> Message:
         return Message.fromBytes(self.deCipher.decrypt(message))
 
+    def setClientPublicKey(self, key:str):
+        self.clientPublicKey = key
+
     def checkSignature(self, messages: List[Message]):
         if len(messages) < 3:
             raise Exception("Signature check on less than 3 messages")
@@ -78,11 +83,7 @@ class ServerCommunication:
         for message in messages[:-2]:
             allMessagesAsBytes += message.toBytes()
 
-        kFile = open('../server/client-publKey.pem', 'r')
-        keyStr = kFile.read()
-        kFile.close()
-
-        clientPublKey = RSA.import_key(keyStr)
+        clientPublKey = RSA.import_key(self.clientPublicKey)
 
         h = SHA256.new(allMessagesAsBytes)
         verifier = PKCS1_PSS.new(clientPublKey)

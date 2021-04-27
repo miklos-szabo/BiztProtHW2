@@ -22,7 +22,7 @@ class ClientCommunication:
         self.checkAndCreateInterface()
         self.keyPass = keypass
 
-        kfile = open('../client/client-keypair.pem', 'r')
+        kfile = open('client/client-keypair.pem', 'r')
         keypairstr = kfile.read()
         kfile.close()
         cleintPrivateKey = RSA.import_key(keypairstr, passphrase=self.keyPass)
@@ -30,7 +30,7 @@ class ClientCommunication:
 
     def checkAndCreateInterface(self):
         if self.netIf is None:
-            self.netIf = network_interface("../netsim/files/", self.ownAddress)
+            self.netIf = network_interface("netsim/files/", self.ownAddress)
 
     def sendMessageToServer(self, fullMessage: FullMessage):
         self.checkAndCreateInterface()
@@ -80,7 +80,7 @@ class ClientCommunication:
         for message in messages[:-2]:
             allMessagesAsBytes += message.toBytes()
 
-        kFile = open('../client/server-publKey.pem', 'r')
+        kFile = open('client/server-publKey.pem', 'r')
         keyStr = kFile.read()
         kFile.close()
 

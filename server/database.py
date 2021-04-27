@@ -2,13 +2,13 @@ from typing import List
 
 
 class UserDatabase:
-    def check_valid_user(self, user: str) -> bool:
+    def check_valid_user(self, user: bytes) -> bool:
         user_dict = self.__create_dict()
-        return user in user_dict.keys()
+        return user.hex() in user_dict.keys()
 
     def check_valid_password(self, user, password) -> bool:
         user_dict = self.__create_dict()
-        return user in user_dict.keys() and password == user_dict[user]
+        return user.hex() in user_dict.keys() and password.hex() == user_dict[user.hex()]
 
     def get_usernames(self):
         user_dict = self.__create_dict()

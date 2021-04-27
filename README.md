@@ -16,3 +16,10 @@ Biztonsági Protokollok 2. házi feladat
 ```
 pip install -r requirements.txt
 ```
+
+##Használat
+Fő mappából beírva: (netsim/files mappa meglétét feltételezve) <br/>
+Windows operációs rendszer szükséges, feltételezzük, hogy a könyvtárak telepítve vannak
++ Network: py -m netsim.network -p "netsim/files" -a "AZ" --clean
++ Szerver: py -m server.server
++ Kliens: py -m client.client -a A

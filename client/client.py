@@ -1,7 +1,7 @@
 from communication.clientCommunication import ClientCommunication
 from communication.fullMessage import FullMessage
 from Crypto.PublicKey import RSA
-from getpass import getpass
+from Crypto.Hash import SHA256
 from pathlib import Path
 import uuid
 import random
@@ -35,11 +35,11 @@ print("Client's address: " + clientAddress)
 
 # Get a random password with which to store the key, we won't need to use it again
 letters = string.printable
-keyPassword = ''.join(random.choice(letters) for _ in range(32))
+keyPassword =''.join(random.choice(letters) for _ in range(32))
 
 clientKey = RSA.generate(4096)
-o1file = open('../client/client-keypair.pem', 'w')
-o2file = open('../client/client-publKey.pem', 'w')
+o1file = open('client/client-keypair.pem', 'w')
+o2file = open('client/client-publKey.pem', 'w')
 keypairStr = clientKey.export_key(format='PEM', passphrase=keyPassword).decode('ASCII')
 publKeyStr = clientKey.public_key().export_key(format='PEM').decode('ASCII')
 o1file.write(keypairStr)
@@ -53,13 +53,14 @@ sessionId = uuid.uuid4()
 communication = ClientCommunication(clientAddress, keyPassword)
 loggedIn = False
 
-kfile = open('../client/client-publKey.pem', 'r')
+kfile = open('client/client-publKey.pem', 'r')
 clientPublicKeyStr = kfile.read()
 kfile.close()
 
-#handshake
+# handshake
 randomString = ''.join(random.choice(letters) for _ in range(512))
-hdsMsg = FullMessage(sessionId, "HDS", clientAddress, randomString=randomString, clientKey=clientPublicKeyStr)
+hdsMsg = FullMessage(sessionId, "HDS", clientAddress, randomString=randomString, clientKey=clientPublicKeyStr,
+                     username=b"12345678901234567890123456789012")
 communication.sendMessageToServer(hdsMsg)
 response = communication.receiveMessageFromServer()
 
@@ -67,23 +68,27 @@ if response.randomString != randomString:
     print("The handshake with server was unsuccessful!")
     sys.exit()
 
-#login
-userName = input("User name: ")
-password = getpass()
+while True:
+    # login
+    userName = SHA256.new(input("User name: ").encode('ascii')).digest()
+    password = SHA256.new(input("Password: ").encode('ascii')).digest()
 
-loginMsg = FullMessage(sessionId, "LGN", "A", userName, password=password)
-communication.sendMessageToServer(loginMsg)
-response = communication.receiveMessageFromServer()
+    loginMsg = FullMessage(sessionId, "LGN", "A", userName, password=password)
+    communication.sendMessageToServer(loginMsg)
+    response = communication.receiveMessageFromServer()
 
-if response.replyStatus == "OK":
-    loggedIn = True
-    print("Login success!")
-else:
-    print("Login failed")
+    if response.replyStatus == "OK":
+        loggedIn = True
+        print("Login success!")
+        break
+    else:
+        print("Login failed")
+
+
 
 #general operation
 while loggedIn:
-    command = input("Enter a command: ").capitalize()
+    command = input("Enter a command: ").upper()
 
     if command == "MKD":
         dirName = input("Enter the name of the directory: ")
@@ -144,7 +149,7 @@ while loggedIn:
         filePath = input("Enter the path of the file: ")
         file = open(filePath, "r").read().encode()
 
-        msg = FullMessage(sessionId, command, clientAddress, userName, file=file)
+        msg = FullMessage(sessionId, command, clientAddress, userName, file=file, path=filePath)
         communication.sendMessageToServer(msg)
         response = communication.receiveMessageFromServer()
 
@@ -155,15 +160,20 @@ while loggedIn:
 
     elif command == "DNL":
         filePath = input("Enter the path of the file to dowload: ")
-        fileName = Path(filePath).name
 
-        msg = FullMessage(sessionId, command, clientAddress, userName, path=fileName)
+        msg = FullMessage(sessionId, command, clientAddress, userName, path=filePath)
         communication.sendMessageToServer(msg)
         response = communication.receiveMessageFromServer()
 
-        file = open(fileName, 'wb')
-        file.write(response.file)
-        file.close()
+        if len(response.file) > 0:
+            fileName = filePath.split('/')[-1]
+            file = open(fileName, 'wb')
+            file.write(response.file)
+            file.close()
+            print("File downloaded!")
+
+        else:
+            print("Unable to download the file!")
 
     elif command == "RMF":
         fileName = input("Enter the name of the file to remove: ")
@@ -177,4 +187,5 @@ while loggedIn:
         else:
             print("Unable to remove the file!")
     
-    print("Unknown command!")
+    else:
+        print("Unknown command!")

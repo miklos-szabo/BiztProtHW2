@@ -77,3 +77,5 @@ python3 receiver.py -p './network/' -a B
 Now, A can send messages to B (given that network.py is running)...
 
 python network.py -p  "./files" -a "AZ" --clean
+py -m netsim.network -p "netsim/files" -a "AZ" --clean
+py -m server.server 
