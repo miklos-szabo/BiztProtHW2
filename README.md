@@ -17,7 +17,7 @@ Biztonsági Protokollok 2. házi feladat
 pip install -r requirements.txt
 ```
 
-##Használat
+## Használat
 Fő mappából beírva: (netsim/files mappa meglétét feltételezve) <br/>
 Windows operációs rendszer szükséges, feltételezzük, hogy a könyvtárak telepítve vannak
 + Network: py -m netsim.network -p "netsim/files" -a "AZ" --clean
