@@ -30,7 +30,7 @@ class Server:
         self.__client: Optional[Client] = None
         self.__communication: Optional[ServerCommunication] = None
         self.__command_database: CommandDatabase = command_database
-        self.__act_path = base_address
+        self.__act_path = base_address.replace(chr(92),'/')
         self.__userdatabase = UserDatabase()
         self.__create_server_home()
         self.__set_communication()
@@ -108,7 +108,7 @@ class Server:
     def __waiting_for_messages(self) -> None:
         msg: Optional[FullMessage] = None
         while True:
-            with Timeout(50000, Exception("No messages recieved for a long time")):
+            with Timeout(1000, Exception("No messages recieved for a long time")):
                 self.__logger.info("Waiting for message...")
                 msg = self.__communication.receiveMessageFromClient()
                 if msg is None:
@@ -186,8 +186,7 @@ class Server:
             elif folder_name == '.':
                 pass
             else:
-                self.__act_path = self.__command_database.create_path(
-                    self.__act_path, folder_name)
+                self.__act_path = f"{self.__act_path}/{folder_name}"
             self.__send_response(ResponseType.OK, msg)
 
     def __list_folder(self, msg: FullMessage) -> None:
