@@ -45,7 +45,7 @@ class WindowsCommands(CommandDatabase):
         return ret.replace('/', chr(92))
 
 class LinuxCommands(CommandDatabase):
-    delete_folder = "rm -rs"
+    delete_folder = "rm -rf"
     delete_file = "rm"
     list_files = "ls -ln"
     current_folder = "pwd"
