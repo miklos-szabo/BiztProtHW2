@@ -7,6 +7,7 @@ from typing import Optional
 from server.database import CommandDatabase, UserDatabase, CommandDatabase, WindowsCommands, LinuxCommands
 from communication.serverCommunication import ServerCommunication
 from communication.fullMessage import FullMessage
+from eventlet import Timeout
 
 
 class ResponseType(Enum):
@@ -105,29 +106,34 @@ class Server:
         return False
 
     def __waiting_for_messages(self) -> None:
+        msg: Optional[FullMessage] = None
         while True:
-            self.__logger.info("Waiting for message...")
-            msg: FullMessage = self.__communication.receiveMessageFromClient()
-            self.__logger.info("Get message!")
-            self.__logger.info(msg)
-            if msg.command == "HDS" or msg.command == "LGN" or not self.__valid_session(msg):
-                self.__send_response(ResponseType.FAIL, msg)
-            if msg.command == "MKD":
-                self.__create_folder(msg)
-            if msg.command == "RMD":
-                self.__delete_folder(msg)
-            if msg.command == "RMF":
-                self.__delete_file(msg)
-            if msg.command == "CWD":
-                self.__change_act_folder(msg)
-            if msg.command == "LST":
-                self.__list_folder(msg)
-            if msg.command == "GWD":
-                self.__send_act_path(msg)
-            if msg.command == "UPL":
-                self.__upload_file(msg)
-            if msg.command == "DNL":
-                self.__download_file(msg)
+            with Timeout(50000, Exception("No messages recieved for a long time")):
+                self.__logger.info("Waiting for message...")
+                msg = self.__communication.receiveMessageFromClient()
+                if msg is None:
+                    return
+                self.__logger.info("Get message!")
+                self.__logger.debug({msg})
+                if msg.command == "HDS" or msg.command == "LGN" or not self.__valid_session(msg):
+                    self.__send_response(ResponseType.FAIL, msg)
+                if msg.command == "MKD":
+                    self.__create_folder(msg)
+                if msg.command == "RMD":
+                    self.__delete_folder(msg)
+                if msg.command == "RMF":
+                    self.__delete_file(msg)
+                if msg.command == "CWD":
+                    self.__change_act_folder(msg)
+                if msg.command == "LST":
+                    self.__list_folder(msg)
+                if msg.command == "GWD":
+                    self.__send_act_path(msg)
+                if msg.command == "UPL":
+                    self.__upload_file(msg)
+                if msg.command == "DNL":
+                    self.__download_file(msg)
+                msg = None
 
     def __valid_session(self, msg: FullMessage) -> bool:
         return msg.sessionId == self.__client.sessionId
@@ -201,6 +207,7 @@ class Server:
         path = self.__command_database.create_path(self.__act_path, file_name)
         with open(path, 'wb') as f:
             f.write(msg.file)
+        self.__logger.debug(f"upload file: {file_name}")
         self.__send_response(ResponseType.OK, msg)
 
     def __download_file(self, msg: FullMessage) -> None:
@@ -208,9 +215,10 @@ class Server:
         path = self.__command_database.create_path(self.__act_path, file_name)
         with open(path, 'r') as f:
             file = f.read()
+        self.__logger.debug(f"download file: {file_name}")
         self.__send_response(ResponseType.OK, msg, file=file, path=path)
 
-    def __check_folder_path_is_correct(self, folder_name: str) -> bool:  # TODO
+    def __check_folder_path_is_correct(self, folder_name: str) -> bool:
         if (self.__check_folder_is_exist(folder_name) and
             folder_name.count('..') < 2 and
                 not (folder_name == '..' and self.__act_path.split('/')[-1] == 'home')):
@@ -251,7 +259,7 @@ class Server:
             randomString=randomString,
             replyStatus=status.value)
         self.__communication.sendMessageToClient(response)
-        self.__logger.debug("Response sent: {response}")
+        self.__logger.debug(f"Response sent: {response}")
 
 
 if __name__ == "__main__":
@@ -269,7 +277,7 @@ if __name__ == "__main__":
     # o2file.close()
 
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
     if os.name == 'posix':
         commands = LinuxCommands()
