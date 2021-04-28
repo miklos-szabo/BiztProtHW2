@@ -24,3 +24,6 @@ Windows és Linux rendszeren is fut, feltételezzük, hogy a könyvtárak telep�
 + Szerver: py -m server.server 
     * jelszót kér a privát kulcs eléréshez: keyPassword
 + Kliens: py -m client.client -a A
+    * két felhasználóval lehet belépni
+        + username: user, password: usr1
+        + username: admin, password: adm1n
