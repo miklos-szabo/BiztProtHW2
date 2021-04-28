@@ -233,7 +233,7 @@ class Server:
     def __end_connection(self) -> None:
         self.__logger.info("end connection")
         self.__client = None
-        self.__act_path = f"{os.getcwd()}/server_home"
+        self.__act_path = f"{os.getcwd().replace(chr(92),'/')}/server_home"
 
     def __send_response(self, status: ResponseType, msg: FullMessage,
                         file: str = "", path: str = "", randomString: str = "") -> None:

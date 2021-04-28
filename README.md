@@ -19,7 +19,8 @@ pip install -r requirements.txt
 
 ## Használat
 Fő mappából beírva: (netsim/files mappa meglétét feltételezve) <br/>
-Windows operációs rendszer szükséges, feltételezzük, hogy a könyvtárak telepítve vannak
+Windows és Linux rendszeren is fut, feltételezzük, hogy a könyvtárak telepítve vannak
 + Network: py -m netsim.network -p "netsim/files" -a "AZ" --clean
-+ Szerver: py -m server.server
++ Szerver: py -m server.server 
+    * jelszót kér a privát kulcs eléréshez: keyPassword
 + Kliens: py -m client.client -a A
