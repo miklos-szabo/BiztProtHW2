@@ -276,7 +276,7 @@ if __name__ == "__main__":
     # o2file.close()
 
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
     if os.name == 'posix':
         commands = LinuxCommands()
