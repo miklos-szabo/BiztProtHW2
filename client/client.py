@@ -162,7 +162,7 @@ while loggedIn:
             print("Wrong command")
             continue
         filePath = inputcommand[1]
-        file = open(filePath, "r").read().encode()
+        file = open(f"client/{filePath}", "r").read().encode()
 
         msg = FullMessage(sessionId, command, clientAddress, userName, file=file, path=filePath)
         communication.sendMessageToServer(msg)
@@ -185,7 +185,7 @@ while loggedIn:
 
         if len(response.file) > 0:
             fileName = filePath.split('/')[-1]
-            file = open(fileName, 'wb')
+            file = open(f"client/{fileName}", 'wb')
             file.write(response.file)
             file.close()
             print("File downloaded!")
