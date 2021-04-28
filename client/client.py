@@ -88,10 +88,13 @@ while True:
 
 #general operation
 while loggedIn:
-    command = input("Enter a command: ").upper()
-
+    inputcommand = input("Enter a command: ").split(' ')
+    command = inputcommand[0].upper()
     if command == "MKD":
-        dirName = input("Enter the name of the directory: ")
+        if len(inputcommand) < 2:
+            print("Wrong command")
+            continue
+        dirName = inputcommand[1]
 
         msg = FullMessage(sessionId, command, clientAddress, userName, path=dirName)
         communication.sendMessageToServer(msg)
@@ -103,7 +106,10 @@ while loggedIn:
             print("Unable to create directory!")
 
     elif command == "RMD":
-        dirName = input("Enter the name of the directory")
+        if len(inputcommand) < 2:
+            print("Wrong command")
+            continue
+        dirName = inputcommand[1]
 
         msg = FullMessage(sessionId, command, clientAddress, userName, path=dirName)
         communication.sendMessageToServer(msg)
@@ -115,7 +121,10 @@ while loggedIn:
             print("Unable to remove directory!")
 
     elif command == "CWD":
-        dirName = input("Enter the path of the directory: ")
+        if len(inputcommand) < 2:
+            print("Wrong command")
+            continue
+        dirName = inputcommand[1]
 
         msg = FullMessage(sessionId, command, clientAddress, userName, path=dirName)
         communication.sendMessageToServer(msg)
@@ -134,7 +143,10 @@ while loggedIn:
         print("Working directory: " + response.path)
 
     elif command == "LST":
-        dirName = input("Enter the path of the directory: ")
+        if len(inputcommand) < 2:
+            dirName = "."
+        else:
+            dirName = inputcommand[1]
 
         msg = FullMessage(sessionId, command, clientAddress, userName, path=dirName)
         communication.sendMessageToServer(msg)
@@ -146,7 +158,10 @@ while loggedIn:
             print(c)
 
     elif command == "UPL":
-        filePath = input("Enter the path of the file: ")
+        if len(inputcommand) < 2:
+            print("Wrong command")
+            continue
+        filePath = inputcommand[1]
         file = open(filePath, "r").read().encode()
 
         msg = FullMessage(sessionId, command, clientAddress, userName, file=file, path=filePath)
@@ -159,7 +174,10 @@ while loggedIn:
             print("Unable to upload the file!")
 
     elif command == "DNL":
-        filePath = input("Enter the path of the file to dowload: ")
+        if len(inputcommand) < 2:
+            print("Wrong command")
+            continue
+        filePath = inputcommand[1]
 
         msg = FullMessage(sessionId, command, clientAddress, userName, path=filePath)
         communication.sendMessageToServer(msg)
@@ -176,7 +194,10 @@ while loggedIn:
             print("Unable to download the file!")
 
     elif command == "RMF":
-        fileName = input("Enter the name of the file to remove: ")
+        if len(inputcommand) < 2:
+            print("Wrong command")
+            continue
+        fileName = inputcommand[1]
 
         msg = FullMessage(sessionId, command, clientAddress, userName, path=fileName)
         communication.sendMessageToServer(msg)

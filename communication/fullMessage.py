@@ -258,7 +258,7 @@ class FullMessage:
             self.encryptedMessages.append(cipher.encrypt(message.toBytes()))
 
     def __str__(self):
-        return f"command: {self.command}\n " \
+        return f"command: {self.command}\n" \
                f"file: {self.file.decode('ascii')}\n" \
                f"path: {self.path}\n" \
                f"randomstring: {self.randomString}\n" \
